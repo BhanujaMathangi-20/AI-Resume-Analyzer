@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Resume Analyzer</title>
+</head>
+<body>
+    <h1>AI Resume Analyzer</h1>
+
+    <form action="/analyze" method="POST" enctype="multipart/form-data">
+
+        <!-- Job Role Selection -->
+        <label><b>Select Job Role:</b></label><br>
+        <select name="job_role" required>
+            <option value="">-- Select Role --</option>
+            <option value="data_analyst">Data Analyst</option>
+            <option value="python_developer">Python Developer</option>
+            <option value="web_developer">Web Developer</option>
+        </select>
+
+        <br><br>
+
+        <!-- Resume Upload -->
+        <input type="file" name="resume" accept=".docx" required>
+        <br><br>
+
+        <button type="submit">Analyze Resume</button>
+    </form>
+
+    <hr>
+
+    {% if filename %}
+        <p><b>Uploaded file:</b> {{ filename }}</p>
+    {% endif %}
+
+    {% if result %}
+        <h3>{{ result }}</h3>
+    {% endif %}
+
+    {% if found_skills %}
+        <p><b>Skills Found:</b> {{ found_skills }}</p>
+    {% endif %}
+
+    {% if missing_skills %}
+        <p><b>Missing Skills:</b> {{ missing_skills }}</p>
+    {% endif %}
+</body>
+</html>
