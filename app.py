@@ -2,8 +2,13 @@ from flask import Flask, render_template, request
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from werkzeug.utils import secure_filename
+import nltk
 import docx
 import os
+
+# Download NLTK data safely (needed on Render)
+nltk.download("punkt")
+nltk.download("stopwords")
 
 app = Flask(__name__)
 
@@ -20,7 +25,6 @@ def index():
 @app.route('/analyze', methods=['POST'])
 def analyze_resume():
 
-    # Check resume file
     if 'resume' not in request.files:
         return render_template('index.html', result="No file uploaded")
 
@@ -62,7 +66,7 @@ def analyze_resume():
 
     required_skills = job_roles.get(job_role, [])
 
-    found_skills = sorted(set(skill for skill in required_skills if skill in filtered_words))
+    found_skills = sorted(skill for skill in required_skills if skill in filtered_words)
     missing_skills = sorted(set(required_skills) - set(found_skills))
 
     # Suitability logic
@@ -79,5 +83,7 @@ def analyze_resume():
         missing_skills=missing_skills
     )
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# IMPORTANT: Render-compatible run
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
