@@ -9,6 +9,7 @@ import os
 # Download NLTK data (needed on Render)
 nltk.download("punkt")
 nltk.download("stopwords")
+nltk.download("punkt_tab")
 
 # Create Flask app FIRST
 app = Flask(__name__)
