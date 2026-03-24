@@ -1,158 +1,92 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-from werkzeug.utils import secure_filename
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-import nltk
-import docx
-import PyPDF2
+from flask import Flask, render_template, request, redirect, url_for
 import os
-
-# Download NLTK data
-nltk.download("punkt")
-nltk.download("stopwords")
+import PyPDF2
+import docx
 
 app = Flask(__name__)
-app.secret_key = "secret123"
 
-# Temporary user storage
+# ---------------- USERS STORAGE ----------------
 users = {}
 
-# Upload folder
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# ---------------- LOGIN ----------------
-@app.route("/", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
-
-        if email in users and users[email] == password:
-            session["user"] = email
-            return redirect(url_for("dashboard"))
-        else:
-            return render_template("login.html", error="Invalid credentials")
-
-    return render_template("login.html")
-
+# ---------------- HOME ----------------
+@app.route('/')
+def home():
+    return redirect(url_for('login'))
 
 # ---------------- SIGNUP ----------------
-@app.route("/signup", methods=["GET", "POST"])
+@app.route('/signup', methods=['GET', 'POST'])
 def signup():
-    if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
-        confirm = request.form.get("confirm")
-
-        if password != confirm:
-            return render_template("signup.html", error="Passwords do not match")
-
-        if email in users:
-            return render_template("signup.html", error="User already exists")
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
 
         users[email] = password
-        return redirect(url_for("login"))
+        return redirect(url_for('login'))
 
-    return render_template("signup.html")
+    return render_template('signup.html')
 
+# ---------------- LOGIN ----------------
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
 
-# ---------------- DASHBOARD ----------------
-@app.route("/dashboard")
-def dashboard():
-    if "user" not in session:
-        return redirect(url_for("login"))
+        if email in users and users[email] == password:
+            return redirect(url_for('index'))
+        else:
+            return "Invalid credentials ❌"
 
-    return render_template("index.html")
+    return render_template('login.html')
 
+# ---------------- INDEX ----------------
+@app.route('/index')
+def index():
+    return render_template('index.html')
 
-# ---------------- LOGOUT ----------------
-@app.route("/logout")
-def logout():
-    session.pop("user", None)
-    return redirect(url_for("login"))
+# ---------------- RESUME ANALYZER ----------------
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    try:
+        file = request.files['resume']
 
+        if file.filename == '':
+            return "No file selected ❌"
 
-# ---------------- ANALYZE ----------------
-@app.route("/analyze", methods=["POST"])
-def analyze_resume():
-    if "user" not in session:
-        return redirect(url_for("login"))
+        text = ""
 
-    if "resume" not in request.files:
-        return render_template("index.html", result="No file uploaded")
+        # -------- PDF --------
+        if file.filename.endswith('.pdf'):
+            reader = PyPDF2.PdfReader(file)
+            for page in reader.pages:
+                text += page.extract_text() or ""
 
-    resume = request.files["resume"]
-    job_role = request.form.get("job_role")
+        # -------- DOCX --------
+        elif file.filename.endswith('.docx'):
+            doc = docx.Document(file)
+            for para in doc.paragraphs:
+                text += para.text
 
-    if resume.filename == "":
-        return render_template("index.html", result="No file selected")
+        else:
+            return "Unsupported file format ❌"
 
-    filename = secure_filename(resume.filename)
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    resume.save(file_path)
+        text = text.lower()
 
-    text = ""
+        skills = ["python", "java", "sql", "machine learning", "html", "css", "flask"]
+        found_skills = [s for s in skills if s in text]
+        missing_skills = [s for s in skills if s not in text]
 
-    # -------- DOCX --------
-    if filename.lower().endswith(".docx"):
-        try:
-            doc = docx.Document(file_path)
-            text = " ".join([para.text for para in doc.paragraphs])
-        except:
-            return render_template("index.html", result="Error reading DOCX")
+        result = f"Found {len(found_skills)} skills"
 
-    # -------- PDF --------
-    elif filename.lower().endswith(".pdf"):
-        try:
-            pdf = PyPDF2.PdfReader(file_path)
-            for page in pdf.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text
-        except:
-            return render_template("index.html", result="Error reading PDF")
+        return render_template(
+            "index.html",
+            result=result,
+            found_skills=found_skills,
+            missing_skills=missing_skills
+        )
 
-    else:
-        return render_template("index.html", result="Upload PDF or DOCX only")
-
-    # -------- SAFETY CHECK --------
-    if not text.strip():
-        return render_template("index.html", result="Could not read file content")
-
-    text = text.lower()
-
-    # -------- NLP --------
-    words = word_tokenize(text)
-    stop_words = set(stopwords.words("english"))
-    filtered_words = [w for w in words if w.isalpha() and w not in stop_words]
-
-    # -------- JOB ROLES --------
-    job_roles = {
-        "data_analyst": ["python", "sql", "excel", "powerbi", "data", "analysis"],
-        "python_developer": ["python", "flask", "django", "api"],
-        "web_developer": ["html", "css", "javascript", "react", "bootstrap"],
-        "java_developer": ["java", "spring", "hibernate"],
-        "ai_engineer": ["python", "machine", "learning", "ai"]
-    }
-
-    required_skills = job_roles.get(job_role, [])
-
-    found_skills = [skill for skill in required_skills if skill in filtered_words]
-    missing_skills = list(set(required_skills) - set(found_skills))
-
-    if required_skills and len(found_skills) >= len(required_skills) * 0.6:
-        result = "✅ Suitable for selected job role"
-    else:
-        result = "❌ Not suitable for selected job role"
-
-    return render_template(
-        "index.html",
-        result=result,
-        found_skills=found_skills,
-        missing_skills=missing_skills
-    )
-
+    except Exception as e:
+        return f"Error occurred: {str(e)}"
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
