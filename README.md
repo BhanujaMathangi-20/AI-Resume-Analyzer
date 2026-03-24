@@ -1,22 +1,28 @@
-# AI Resume Analyzer with Job Role Matching
+# AI Resume Analyzer
 
-This project is a web-based AI Resume Analyzer built using Python and Flask.  
-It allows users to upload their resume and check whether it is suitable for a selected job role.
+This is a web-based AI Resume Analyzer built using Python and Flask.
 
 ## 🚀 Features
-- Upload resume in DOCX format
-- Select job role (Data Analyst, Python Developer, Web Developer)
-- Analyze resume using NLP
-- Show whether the resume is suitable for the job role
-- Display missing skills for the selected role
+- User Signup & Login
+- Upload Resume (PDF/DOCX)
+- Analyze skills based on job role
+- Show found & missing skills
 
-## 🛠 Technologies Used
+## 🛠️ Technologies Used
 - Python
 - Flask
-- NLTK (Natural Language Processing)
-- HTML
+- HTML, CSS
+- PyPDF2 / python-docx
 
-## ▶️ How to Run the Project
+## 🌐 Live Demo
+https://ai-resume-analyzer-3-fxeo.onrender.com
+
+## 📂 How to Run
 1. Clone the repository:
-```bash
-git clone https://github.com/BhanujaMathangi-20/AI-Resume-Analyzer.git
+   git clone https://github.com/BhanujaMathangi-20/AI-Resume-Analyzer.git
+
+2. Install requirements:
+   pip install -r requirements.txt
+
+3. Run the app:
+   python app.py
