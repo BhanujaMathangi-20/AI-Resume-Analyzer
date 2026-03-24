@@ -4,6 +4,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import nltk
 import docx
+import PyPDF2
 import os
 
 # Download NLTK data
