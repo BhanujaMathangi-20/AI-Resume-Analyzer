@@ -1,25 +1,35 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import os
+import sqlite3
 from PyPDF2 import PdfReader
 from docx import Document
 
 app = Flask(__name__)
 app.secret_key = "secret123"
 
+# -------- Upload Folder --------
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+# -------- Database Setup --------
+def init_db():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute('CREATE TABLE IF NOT EXISTS users (email TEXT, password TEXT)')
+    conn.commit()
+    conn.close()
 
-# ---------------- HOME ----------------
+init_db()
+
+# -------- Home --------
 @app.route('/')
 def home():
     if 'user' in session:
         return render_template('index.html')
     return redirect(url_for('login'))
 
-
-# ---------------- LOGIN ----------------
+# -------- Login --------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
@@ -28,7 +38,13 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
-        if email == "test@gmail.com" and password == "123":
+        conn = sqlite3.connect('users.db')
+        c = conn.cursor()
+        c.execute("SELECT * FROM users WHERE email=? AND password=?", (email, password))
+        user = c.fetchone()
+        conn.close()
+
+        if user:
             session['user'] = email
             return redirect(url_for('home'))
         else:
@@ -36,30 +52,32 @@ def login():
 
     return render_template('login.html', error=error)
 
-
-# ---------------- SIGNUP ----------------
+# -------- Signup --------
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        conn = sqlite3.connect('users.db')
+        c = conn.cursor()
+        c.execute("INSERT INTO users VALUES (?, ?)", (email, password))
+        conn.commit()
+        conn.close()
+
         return redirect(url_for('login'))
+
     return render_template('signup.html')
 
-
-# ---------------- LOGOUT ----------------
+# -------- Logout --------
 @app.route('/logout')
 def logout():
     session.pop('user', None)
     return redirect(url_for('login'))
 
-
-# ---------------- ANALYZE ----------------
+# -------- Analyze Resume --------
 @app.route('/analyze', methods=['POST'])
 def analyze():
-
-    # 🔐 protect route
-    if 'user' not in session:
-        return redirect(url_for('login'))
-
     job_role = request.form['job_role']
     file = request.files['resume']
 
@@ -73,7 +91,8 @@ def analyze():
         if file.filename.endswith('.pdf'):
             reader = PdfReader(filepath)
             for page in reader.pages:
-                text += page.extract_text()
+                if page.extract_text():
+                    text += page.extract_text()
 
         # DOCX
         elif file.filename.endswith('.docx'):
@@ -85,8 +104,6 @@ def analyze():
 
         skills_db = {
             "python developer": ["python", "flask", "sql", "html", "css"],
-            "data analyst": ["python", "sql", "excel", "pandas"],
-            "web developer": ["html", "css", "javascript"],
             "java developer": ["java", "spring"],
             "ai engineer": ["python", "machine learning"]
         }
@@ -107,8 +124,7 @@ def analyze():
 
     return "No file uploaded"
 
-
-# ---------------- RUN ----------------
-if __name__ == "__main__":
+# -------- Run --------
+if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host='0.0.0.0', port=port)

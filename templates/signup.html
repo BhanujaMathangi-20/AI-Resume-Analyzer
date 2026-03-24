@@ -1,19 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Signup</title>
+    <title>Signup</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+        }
+
+        input, button {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+        }
+    </style>
 </head>
-<body style="text-align:center">
 
-<h2>Signup</h2>
+<body>
 
-<form method="POST">
-<input type="email" name="email" placeholder="Email" required><br><br>
-<input type="password" name="password" placeholder="Password" required><br><br>
-<button type="submit">Signup</button>
-</form>
+<div class="container">
+    <h2>Signup</h2>
 
-<p>Already have account? <a href="/login">Login</a></p>
+    <form method="POST">
+        <input type="email" name="email" placeholder="Enter Email" required>
+        <input type="password" name="password" placeholder="Create Password" required>
+        <button type="submit">Signup</button>
+    </form>
+
+    <p>Already have account? <a href="/login">Login</a></p>
+</div>
 
 </body>
 </html>
