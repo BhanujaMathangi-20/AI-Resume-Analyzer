@@ -1,46 +1,57 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import os
+import json
 from PyPDF2 import PdfReader
 from docx import Document
 
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# 👉 STORE USERS HERE (temporary database)
-users = {}
+# ---------- USER STORAGE ----------
+USER_FILE = "users.json"
 
+if os.path.exists(USER_FILE):
+    with open(USER_FILE, "r") as f:
+        users = json.load(f)
+else:
+    users = {}
+
+# ---------- UPLOAD FOLDER ----------
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# ---------------- HOME ----------------
+# ---------- HOME ----------
 @app.route('/')
 def home():
     if 'user' in session:
         return render_template('index.html')
     return redirect(url_for('login'))
 
-# ---------------- SIGNUP ----------------
+# ---------- SIGNUP ----------
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
 
-        users[email] = password   # ✅ SAVE USER
+        users[email] = password
+
+        # save to file
+        with open(USER_FILE, "w") as f:
+            json.dump(users, f)
 
         return redirect(url_for('login'))
 
     return render_template('signup.html')
 
-# ---------------- LOGIN ----------------
+# ---------- LOGIN ----------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
 
-        # ✅ CHECK FROM USERS DICTIONARY
         if email in users and users[email] == password:
             session['user'] = email
             return redirect(url_for('home'))
@@ -49,13 +60,13 @@ def login():
 
     return render_template('login.html')
 
-# ---------------- LOGOUT ----------------
+# ---------- LOGOUT ----------
 @app.route('/logout')
 def logout():
     session.pop('user', None)
     return redirect(url_for('login'))
 
-# ---------------- ANALYZE ----------------
+# ---------- ANALYZE ----------
 @app.route('/analyze', methods=['POST'])
 def analyze():
     job_role = request.form['job_role']
@@ -101,7 +112,7 @@ def analyze():
 
     return "No file uploaded"
 
-# ---------------- RUN ----------------
+# ---------- RUN ----------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
