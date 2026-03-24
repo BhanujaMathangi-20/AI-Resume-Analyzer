@@ -22,18 +22,19 @@ def home():
 # ---------------- LOGIN ----------------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    error = None
+
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
 
-        # simple login (demo)
         if email == "test@gmail.com" and password == "123":
             session['user'] = email
             return redirect(url_for('home'))
         else:
-            return "Invalid email or password"
+            error = "Invalid email or password"
 
-    return render_template('login.html')
+    return render_template('login.html', error=error)
 
 
 # ---------------- SIGNUP ----------------
@@ -55,7 +56,7 @@ def logout():
 @app.route('/analyze', methods=['POST'])
 def analyze():
 
-    # 🔴 IMPORTANT LOGIN PROTECTION
+    # 🔐 protect route
     if 'user' not in session:
         return redirect(url_for('login'))
 
@@ -82,7 +83,6 @@ def analyze():
 
         text = text.lower()
 
-        # SKILLS DATABASE
         skills_db = {
             "python developer": ["python", "flask", "sql", "html", "css"],
             "data analyst": ["python", "sql", "excel", "pandas"],

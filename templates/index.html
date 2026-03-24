@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>AI Resume Analyzer</title>
+
 <style>
 body {
     font-family: Arial;
@@ -9,6 +10,7 @@ body {
     text-align: center;
     color: white;
 }
+
 .container {
     background: white;
     color: black;
@@ -17,46 +19,54 @@ body {
     padding: 30px;
     border-radius: 10px;
 }
+
 select, input, button {
     width: 90%;
     padding: 10px;
     margin: 10px 0;
 }
+
 button {
     background: #667eea;
     color: white;
     border: none;
 }
+
 .top {
     text-align: right;
     padding: 10px;
 }
 </style>
+
 </head>
+
 <body>
 
+<!-- 🔓 LOGOUT BUTTON -->
 <div class="top">
-<a href="/logout" style="color:white;">Logout</a>
+    <a href="/logout" style="color:white;">Logout</a>
 </div>
 
 <div class="container">
-<h2>AI Resume Analyzer</h2>
+
+<h2>🚀 AI Resume Analyzer</h2>
 
 <form action="/analyze" method="POST" enctype="multipart/form-data">
 
-<label>Select Job Role</label><br>
+<label>Select Job Role:</label><br>
+
 <select name="job_role" required>
-<option value="">Select Role</option>
-<option value="data analyst">Data Analyst</option>
-<option value="python developer">Python Developer</option>
-<option value="web developer">Web Developer</option>
-<option value="java developer">Java Developer</option>
-<option value="ai engineer">AI Engineer</option>
+    <option value="">-- Select Role --</option>
+    <option value="python developer">Python Developer</option>
+    <option value="data analyst">Data Analyst</option>
+    <option value="web developer">Web Developer</option>
+    <option value="java developer">Java Developer</option>
+    <option value="ai engineer">AI Engineer</option>
 </select>
 
 <br>
 
-<label>Upload Resume</label><br>
+<label>Upload Resume (PDF or DOCX)</label><br>
 <input type="file" name="resume" accept=".pdf,.docx" required>
 
 <br>
@@ -65,14 +75,17 @@ button {
 
 </form>
 
+<!-- ✅ RESULT -->
 {% if result %}
 <p><b>{{ result }}</b></p>
 {% endif %}
 
+<!-- ✅ FOUND SKILLS -->
 {% if found_skills %}
 <p><b>Skills Found:</b> {{ found_skills }}</p>
 {% endif %}
 
+<!-- ✅ MISSING SKILLS -->
 {% if missing_skills %}
 <p><b>Missing Skills:</b> {{ missing_skills }}</p>
 {% endif %}
