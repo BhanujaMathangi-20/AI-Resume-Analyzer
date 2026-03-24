@@ -36,6 +36,7 @@ def login():
 
     return render_template("login.html")
 
+
 # ---------------- SIGNUP ----------------
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -55,6 +56,7 @@ def signup():
 
     return render_template("signup.html")
 
+
 # ---------------- DASHBOARD ----------------
 @app.route("/dashboard")
 def dashboard():
@@ -63,11 +65,13 @@ def dashboard():
 
     return render_template("index.html")
 
+
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
 def logout():
     session.pop("user", None)
     return redirect(url_for("login"))
+
 
 # ---------------- ANALYZE ----------------
 @app.route("/analyze", methods=["POST"])
@@ -88,32 +92,35 @@ def analyze_resume():
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     resume.save(file_path)
 
-    # -------- FILE TYPE HANDLING (SAFE) --------
+    text = ""
+
+    # -------- DOCX --------
     if filename.lower().endswith(".docx"):
         try:
             doc = docx.Document(file_path)
-            text = " ".join([para.text for para in doc.paragraphs]).lower()
-        except Exception:
-            return render_template("index.html", result="Error reading DOCX file")
+            text = " ".join([para.text for para in doc.paragraphs])
+        except:
+            return render_template("index.html", result="Error reading DOCX")
 
+    # -------- PDF --------
     elif filename.lower().endswith(".pdf"):
         try:
-            reader = PyPDF2.PdfReader(file_path)
-            text = ""
-            for page in reader.pages:
-                content = page.extract_text()
-                if content:
-                    text += content
-            text = text.lower()
-        except Exception:
-            return render_template("index.html", result="Error reading PDF file")
+            pdf = PyPDF2.PdfReader(file_path)
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text
+        except:
+            return render_template("index.html", result="Error reading PDF")
 
     else:
-        return render_template("index.html", result="Only PDF or DOCX allowed")
+        return render_template("index.html", result="Upload PDF or DOCX only")
 
-    # -------- EMPTY TEXT CHECK --------
+    # -------- SAFETY CHECK --------
     if not text.strip():
-        return render_template("index.html", result="Empty or unsupported file")
+        return render_template("index.html", result="Could not read file content")
+
+    text = text.lower()
 
     # -------- NLP --------
     words = word_tokenize(text)
@@ -123,10 +130,10 @@ def analyze_resume():
     # -------- JOB ROLES --------
     job_roles = {
         "data_analyst": ["python", "sql", "excel", "powerbi", "data", "analysis"],
-        "python_developer": ["python", "flask", "django", "api", "backend"],
+        "python_developer": ["python", "flask", "django", "api"],
         "web_developer": ["html", "css", "javascript", "react", "bootstrap"],
         "java_developer": ["java", "spring", "hibernate"],
-        "ai_engineer": ["python", "machine", "learning", "ai", "nlp"]
+        "ai_engineer": ["python", "machine", "learning", "ai"]
     }
 
     required_skills = job_roles.get(job_role, [])
@@ -134,7 +141,6 @@ def analyze_resume():
     found_skills = [skill for skill in required_skills if skill in filtered_words]
     missing_skills = list(set(required_skills) - set(found_skills))
 
-    # -------- RESULT --------
     if required_skills and len(found_skills) >= len(required_skills) * 0.6:
         result = "✅ Suitable for selected job role"
     else:
@@ -147,7 +153,8 @@ def analyze_resume():
         missing_skills=missing_skills
     )
 
-# ---------------- RUN (RENDER READY) ----------------
+
+# ---------------- RUN ----------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
