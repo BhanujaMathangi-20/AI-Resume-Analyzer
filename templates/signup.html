@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Signup</title>
+<style>
+body {
+    font-family: Arial;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    width: 300px;
+    text-align: center;
+}
+input, button {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+}
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+<h2>Sign Up</h2>
+
+<form method="POST">
+<input type="email" name="email" placeholder="Email" required>
+<input type="password" name="password" placeholder="Password" required>
+<input type="password" name="confirm" placeholder="Confirm Password" required>
+<button type="submit">Sign Up</button>
+</form>
+
+<p>Already have account? <a href="/login">Login</a></p>
+
+</div>
+
+</body>
+</html>
