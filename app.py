@@ -1,16 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 import os
 import PyPDF2
 import docx
 
 app = Flask(__name__)
+app.secret_key = "secret123"
 
-# ---------------- USERS STORAGE ----------------
+# Temporary user storage (resets on restart)
 users = {}
 
 # ---------------- HOME ----------------
 @app.route('/')
 def home():
+    if 'user' in session:
+        return render_template("index.html")
     return redirect(url_for('login'))
 
 # ---------------- SIGNUP ----------------
@@ -20,10 +23,13 @@ def signup():
         email = request.form['email']
         password = request.form['password']
 
+        if email in users:
+            return "User already exists ❌"
+
         users[email] = password
         return redirect(url_for('login'))
 
-    return render_template('signup.html')
+    return render_template("signup.html")
 
 # ---------------- LOGIN ----------------
 @app.route('/login', methods=['GET', 'POST'])
@@ -33,50 +39,57 @@ def login():
         password = request.form['password']
 
         if email in users and users[email] == password:
-            return redirect(url_for('index'))
+            session['user'] = email
+            return redirect(url_for('home'))
         else:
             return "Invalid credentials ❌"
 
-    return render_template('login.html')
+    return render_template("login.html")
 
-# ---------------- INDEX ----------------
-@app.route('/index')
-def index():
-    return render_template('index.html')
+# ---------------- LOGOUT ----------------
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('login'))
 
-# ---------------- RESUME ANALYZER ----------------
+# ---------------- ANALYZE ----------------
 @app.route('/analyze', methods=['POST'])
 def analyze():
     try:
+        if 'user' not in session:
+            return redirect(url_for('login'))
+
         file = request.files['resume']
+        job_role = request.form.get('job_role')
 
         if file.filename == '':
             return "No file selected ❌"
 
         text = ""
 
-        # -------- PDF --------
+        # PDF
         if file.filename.endswith('.pdf'):
             reader = PyPDF2.PdfReader(file)
             for page in reader.pages:
                 text += page.extract_text() or ""
 
-        # -------- DOCX --------
+        # DOCX
         elif file.filename.endswith('.docx'):
             doc = docx.Document(file)
             for para in doc.paragraphs:
                 text += para.text
 
         else:
-            return "Unsupported file format ❌"
+            return "Unsupported file ❌"
 
         text = text.lower()
 
         skills = ["python", "java", "sql", "machine learning", "html", "css", "flask"]
+
         found_skills = [s for s in skills if s in text]
         missing_skills = [s for s in skills if s not in text]
 
-        result = f"Found {len(found_skills)} skills"
+        result = f"Role: {job_role} | Found {len(found_skills)} skills"
 
         return render_template(
             "index.html",

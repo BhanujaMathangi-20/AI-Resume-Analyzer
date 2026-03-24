@@ -36,29 +36,28 @@ button {
 <body>
 
 <div class="top">
-    <a href="/logout" style="color:white;">Logout</a>
+<a href="/logout" style="color:white;">Logout</a>
 </div>
 
 <div class="container">
-<h2>🚀 AI Resume Analyzer</h2>
+<h2>AI Resume Analyzer</h2>
 
 <form action="/analyze" method="POST" enctype="multipart/form-data">
 
-<label>Select Job Role:</label><br>
+<label>Select Job Role</label><br>
 <select name="job_role" required>
-<option value="">-- Select Role --</option>
-<option value="data_analyst">Data Analyst</option>
-<option value="python_developer">Python Developer</option>
-<option value="web_developer">Web Developer</option>
-<option value="java_developer">Java Developer</option>
-<option value="ai_engineer">AI Engineer</option>
+<option value="">Select Role</option>
+<option value="data analyst">Data Analyst</option>
+<option value="python developer">Python Developer</option>
+<option value="web developer">Web Developer</option>
+<option value="java developer">Java Developer</option>
+<option value="ai engineer">AI Engineer</option>
 </select>
 
 <br>
 
-<label>Upload Resume (PDF or DOCX)</label><br>
-<input type="file" name="resume" 
-accept=".pdf,.docx" required>
+<label>Upload Resume</label><br>
+<input type="file" name="resume" accept=".pdf,.docx" required>
 
 <br>
 
