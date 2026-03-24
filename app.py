@@ -88,20 +88,32 @@ def analyze_resume():
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     resume.save(file_path)
 
-    # -------- FILE TYPE HANDLING --------
+    # -------- FILE TYPE HANDLING (SAFE) --------
     if filename.lower().endswith(".docx"):
-        doc = docx.Document(file_path)
-        text = " ".join([para.text for para in doc.paragraphs]).lower()
+        try:
+            doc = docx.Document(file_path)
+            text = " ".join([para.text for para in doc.paragraphs]).lower()
+        except Exception:
+            return render_template("index.html", result="Error reading DOCX file")
 
     elif filename.lower().endswith(".pdf"):
-        reader = PyPDF2.PdfReader(file_path)
-        text = ""
-        for page in reader.pages:
-            text += page.extract_text() or ""
-        text = text.lower()
+        try:
+            reader = PyPDF2.PdfReader(file_path)
+            text = ""
+            for page in reader.pages:
+                content = page.extract_text()
+                if content:
+                    text += content
+            text = text.lower()
+        except Exception:
+            return render_template("index.html", result="Error reading PDF file")
 
     else:
         return render_template("index.html", result="Only PDF or DOCX allowed")
+
+    # -------- EMPTY TEXT CHECK --------
+    if not text.strip():
+        return render_template("index.html", result="Empty or unsupported file")
 
     # -------- NLP --------
     words = word_tokenize(text)
