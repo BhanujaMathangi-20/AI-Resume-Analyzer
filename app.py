@@ -14,14 +14,14 @@ nltk.download("stopwords")
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# Temporary user storage (for demo)
+# Temporary user storage
 users = {}
 
 # Upload folder
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# ------------------ LOGIN ------------------
+# ---------------- LOGIN ----------------
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -36,8 +36,7 @@ def login():
 
     return render_template("login.html")
 
-
-# ------------------ SIGNUP ------------------
+# ---------------- SIGNUP ----------------
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
@@ -56,8 +55,7 @@ def signup():
 
     return render_template("signup.html")
 
-
-# ------------------ DASHBOARD ------------------
+# ---------------- DASHBOARD ----------------
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
@@ -65,15 +63,13 @@ def dashboard():
 
     return render_template("index.html")
 
-
-# ------------------ LOGOUT ------------------
+# ---------------- LOGOUT ----------------
 @app.route("/logout")
 def logout():
     session.pop("user", None)
     return redirect(url_for("login"))
 
-
-# ------------------ ANALYZE ------------------
+# ---------------- ANALYZE ----------------
 @app.route("/analyze", methods=["POST"])
 def analyze_resume():
     if "user" not in session:
@@ -92,23 +88,33 @@ def analyze_resume():
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     resume.save(file_path)
 
-    if not filename.lower().endswith(".docx"):
-        return render_template("index.html", result="Upload DOCX file only")
+    # -------- FILE TYPE HANDLING --------
+    if filename.lower().endswith(".docx"):
+        doc = docx.Document(file_path)
+        text = " ".join([para.text for para in doc.paragraphs]).lower()
 
-    # Read docx
-    doc = docx.Document(file_path)
-    text = " ".join([para.text for para in doc.paragraphs]).lower()
+    elif filename.lower().endswith(".pdf"):
+        reader = PyPDF2.PdfReader(file_path)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() or ""
+        text = text.lower()
 
-    # NLP
+    else:
+        return render_template("index.html", result="Only PDF or DOCX allowed")
+
+    # -------- NLP --------
     words = word_tokenize(text)
     stop_words = set(stopwords.words("english"))
     filtered_words = [w for w in words if w.isalpha() and w not in stop_words]
 
-    # Job roles
+    # -------- JOB ROLES --------
     job_roles = {
-        "data_analyst": ["python", "sql", "excel", "power", "bi", "data", "analysis"],
-        "python_developer": ["python", "flask", "django", "api", "sql", "oop"],
-        "web_developer": ["html", "css", "javascript", "react", "bootstrap"]
+        "data_analyst": ["python", "sql", "excel", "powerbi", "data", "analysis"],
+        "python_developer": ["python", "flask", "django", "api", "backend"],
+        "web_developer": ["html", "css", "javascript", "react", "bootstrap"],
+        "java_developer": ["java", "spring", "hibernate"],
+        "ai_engineer": ["python", "machine", "learning", "ai", "nlp"]
     }
 
     required_skills = job_roles.get(job_role, [])
@@ -116,6 +122,7 @@ def analyze_resume():
     found_skills = [skill for skill in required_skills if skill in filtered_words]
     missing_skills = list(set(required_skills) - set(found_skills))
 
+    # -------- RESULT --------
     if required_skills and len(found_skills) >= len(required_skills) * 0.6:
         result = "✅ Suitable for selected job role"
     else:
@@ -128,8 +135,7 @@ def analyze_resume():
         missing_skills=missing_skills
     )
 
-
-# ------------------ RUN (RENDER READY) ------------------
+# ---------------- RUN (RENDER READY) ----------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
